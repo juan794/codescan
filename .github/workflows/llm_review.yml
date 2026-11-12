@@ -1,0 +1,15 @@
+name: LLM Code Review
+on: 
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: AI Code Reviewer
+        uses: coderabbitai/coderabbit-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          LLM_MODEL: "deepseek/deepseek-v4.1-flash-1017" # Specifies routing model
