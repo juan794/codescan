@@ -1,0 +1,26 @@
+name: C++ Dynamic Analysis
+on: [push, pull_request]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Tools
+        run: sudo apt-get update && sudo apt-get install -y clang llvm valgrind afl++
+      
+      - name: Run Valgrind Memcheck
+        run: |
+          g++ -g -O0 mem_vuln.cpp -o mem_vuln
+          # Provide mock input via echo and fail build on memory errors
+          echo "Test" | valgrind --error-exitcode=1 --leak-check=full ./mem_vuln
+      
+      - name: Run AFL Fuzzer (60 seconds limit)
+        run: |
+          afl-clang-fast++ -g -O0 parser.cpp -o afl_parser
+          mkdir in out && echo "HELLO" > in/seed.txt
+          # Run AFL for 60 seconds; check for generated crash files
+          timeout 60 afl-fuzz -i in -o out ./afl_parser || true
+          if ls out/default/crashes/id* 1> /dev/null 2>&1; then
+            echo "Vulnerability found by AFL!"
+            exit 1
+          fi
