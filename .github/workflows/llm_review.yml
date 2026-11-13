@@ -2,14 +2,25 @@ name: LLM Code Review
 on: 
   pull_request:
     types: [opened, synchronize]
+
+# Explicitly grant the GITHUB_TOKEN permission to post PR comments
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: AI Code Reviewer with DeepSeek
-        uses: coderabbitai/coderabbit-action@v1
+        with:
+          fetch-depth: 0 # Required to fetch the commit history for the PR diff
+          
+      - name: AI Code Reviewer with DeepSeek (via OpenRouter)
+        uses: anc95/ChatGPT-CodeReview@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          LLM_MODEL: "deepseek/deepseek-v4.1-flash-1017" # Specifies routing model
+          # OpenRouter acts as a drop-in replacement for the OpenAI API
+          OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENAI_API_ENDPOINT: "https://openrouter.ai/api/v1"
+          MODEL: "deepseek/deepseek-v4.1-flash-1017"
